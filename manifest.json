@@ -88,6 +88,7 @@
     { "name": "get_threat_logs", "description": "Retrieves recent threat logs" },
     { "name": "get_system_logs", "description": "Retrieves recent system logs" },
     { "name": "get_config_logs", "description": "Retrieves recent configuration change logs" },
+    { "name": "get_url_filter_logs", "description": "Retrieves recent URL filter logs" },
     { "name": "get_wildfire_status", "description": "Retrieves WildFire cloud connection status" },
     { "name": "get_antivirus_version", "description": "Retrieves antivirus and threat signature versions" },
     { "name": "get_content_versions", "description": "Retrieves available content update versions" },

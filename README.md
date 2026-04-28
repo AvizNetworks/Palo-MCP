@@ -11,7 +11,7 @@ Supports **PA-Series firewalls** (PA-220, PA-415, PA-440, PA-445, PA-450, PA-460
 
 > **Warning:** This server gives an AI model direct access to your firewall configuration via the PanOS API. AI models can make mistakes, misinterpret instructions, or take unintended actions that may disrupt network traffic, modify security policies, or cause outages. **Use at your own risk.** Always review AI-proposed changes before committing, use a read-only API key where possible, and never run against production firewalls without understanding the consequences.
 
-**116 tools across 16 modules** covering firewall management, monitoring, and configuration changes — all from within your AI assistant.
+**117 tools across 16 modules** covering firewall management, monitoring, and configuration changes — all from within your AI assistant.
 
 ## What you can do
 
@@ -146,7 +146,7 @@ When multiple entries are configured, every tool accepts a `firewall: <name>` pa
 | Admin | 3 | Admins, roles, auth profiles |
 | VPN | 3 | IPSec tunnels, GlobalProtect users and config |
 | Panorama | 29 | Device groups, templates, shared objects, pre/post rules CRUD, DG NAT rules CRUD, push status, HA |
-| Logs | 4 | Traffic, threat, system, and config logs |
+| Logs | 5 | Traffic, threat, system, URL, and config logs |
 | Threat | 4 | WildFire, antivirus, content versions, URL categories |
 | Certificates | 7 | Certificates, decryption rules (get, add, move, delete, enable/disable) and profiles |
 | Licenses | 2 | License info and usage |
