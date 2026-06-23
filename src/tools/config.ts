@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { setConfig, deleteConfig, commitConfig, commitAll, formatResponse, resolveTarget, isApiError } from "../api/client.js";
-import { configXpath, deviceGroup, xmlElement, commitDescription, partialAdmin, firewallName } from "../schemas/panos.js";
+import { configXpath, deviceGroup, xmlElement, commitDescription, partialAdmin, firewallName, xmlEscape } from "../schemas/panos.js";
 
 export function registerConfigTools(server: McpServer) {
   server.tool(
@@ -51,10 +51,10 @@ export function registerConfigTools(server: McpServer) {
       if (isApiError(target)) return formatResponse(target);
       let cmd = "<commit>";
       if (description) {
-        cmd += `<description>${description}</description>`;
+        cmd += `<description>${xmlEscape(description)}</description>`;
       }
       if (partial_admin) {
-        cmd += `<partial><admin><member>${partial_admin}</member></admin></partial>`;
+        cmd += `<partial><admin><member>${xmlEscape(partial_admin)}</member></admin></partial>`;
       }
       cmd += "</commit>";
       const result = await commitConfig(cmd, target);
@@ -76,10 +76,10 @@ export function registerConfigTools(server: McpServer) {
       if (isApiError(target)) return formatResponse(target);
       let cmd = "<commit>";
       if (description) {
-        cmd += `<description>${description}</description>`;
+        cmd += `<description>${xmlEscape(description)}</description>`;
       }
       if (partial_admin) {
-        cmd += `<partial><admin><member>${partial_admin}</member></admin></partial>`;
+        cmd += `<partial><admin><member>${xmlEscape(partial_admin)}</member></admin></partial>`;
       }
       cmd += "</commit>";
       const result = await commitConfig(cmd, target);
@@ -101,9 +101,9 @@ export function registerConfigTools(server: McpServer) {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       let cmd = "<commit-all><shared-policy>";
-      cmd += `<device-group><entry name="${device_group}"/></device-group>`;
+      cmd += `<device-group><entry name="${xmlEscape(device_group)}"/></device-group>`;
       if (description) {
-        cmd += `<description>${description}</description>`;
+        cmd += `<description>${xmlEscape(description)}</description>`;
       }
       if (include_template) {
         cmd += "<include-template>yes</include-template>";

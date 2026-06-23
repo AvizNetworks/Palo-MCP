@@ -1,10 +1,10 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getConfig, setConfig, deleteConfig, moveConfig, formatResponse, resolveTarget, isApiError } from "../api/client.js";
-import { firewallName } from "../schemas/panos.js";
+import { firewallName, xmlEscape } from "../schemas/panos.js";
 
 function members(items: string[]): string {
-  return items.map(i => `<member>${i}</member>`).join("");
+  return items.map(i => `<member>${xmlEscape(i)}</member>`).join("");
 }
 
 export function registerCertificatesTools(server: McpServer) {
@@ -75,7 +75,7 @@ export function registerCertificatesTools(server: McpServer) {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/decryption/rules";
-      let element = `<entry name="${name}">`;
+      let element = `<entry name="${xmlEscape(name)}">`;
       element += `<from>${members(from_zones)}</from>`;
       element += `<to>${members(to_zones)}</to>`;
       element += `<source>${members(source)}</source>`;
@@ -83,8 +83,8 @@ export function registerCertificatesTools(server: McpServer) {
       element += `<service>${members(service)}</service>`;
       element += `<action>${action}</action>`;
       if (type) element += `<type><${type}/></${"type"}>`;
-      if (decryption_profile) element += `<profile>${decryption_profile}</profile>`;
-      if (description) element += `<description>${description}</description>`;
+      if (decryption_profile) element += `<profile>${xmlEscape(decryption_profile)}</profile>`;
+      if (description) element += `<description>${xmlEscape(description)}</description>`;
       if (disabled !== undefined) element += `<disabled>${disabled ? "yes" : "no"}</disabled>`;
       element += `</entry>`;
       const result = await setConfig(xpath, element, target);

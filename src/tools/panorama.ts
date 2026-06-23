@@ -1,10 +1,10 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { executeOpCommand, getConfig, setConfig, deleteConfig, moveConfig, formatResponse, resolveTarget, isApiError } from "../api/client.js";
-import { deviceGroup, firewallName } from "../schemas/panos.js";
+import { deviceGroup, firewallName, xmlEscape } from "../schemas/panos.js";
 
 function members(items: string[]): string {
-  return items.map(i => `<member>${i}</member>`).join("");
+  return items.map(i => `<member>${xmlEscape(i)}</member>`).join("");
 }
 
 export function registerPanoramaTools(server: McpServer) {
@@ -360,7 +360,7 @@ export function registerPanoramaTools(server: McpServer) {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = `/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='${device_group}']/pre-rulebase/security/rules`;
-      let element = `<entry name="${name}">`;
+      let element = `<entry name="${xmlEscape(name)}">`;
       element += `<from>${members(from_zones)}</from>`;
       element += `<to>${members(to_zones)}</to>`;
       element += `<source>${members(source)}</source>`;
@@ -370,8 +370,8 @@ export function registerPanoramaTools(server: McpServer) {
       element += `<action>${action}</action>`;
       if (log_end !== undefined) element += `<log-end>${log_end ? "yes" : "no"}</log-end>`;
       if (log_start !== undefined) element += `<log-start>${log_start ? "yes" : "no"}</log-start>`;
-      if (profile_group) element += `<profile-setting><group><member>${profile_group}</member></group></profile-setting>`;
-      if (description) element += `<description>${description}</description>`;
+      if (profile_group) element += `<profile-setting><group><member>${xmlEscape(profile_group)}</member></group></profile-setting>`;
+      if (description) element += `<description>${xmlEscape(description)}</description>`;
       if (disabled !== undefined) element += `<disabled>${disabled ? "yes" : "no"}</disabled>`;
       if (tag && tag.length > 0) element += `<tag>${members(tag)}</tag>`;
       element += `</entry>`;
@@ -449,7 +449,7 @@ export function registerPanoramaTools(server: McpServer) {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = `/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='${device_group}']/post-rulebase/security/rules`;
-      let element = `<entry name="${name}">`;
+      let element = `<entry name="${xmlEscape(name)}">`;
       element += `<from>${members(from_zones)}</from>`;
       element += `<to>${members(to_zones)}</to>`;
       element += `<source>${members(source)}</source>`;
@@ -459,8 +459,8 @@ export function registerPanoramaTools(server: McpServer) {
       element += `<action>${action}</action>`;
       if (log_end !== undefined) element += `<log-end>${log_end ? "yes" : "no"}</log-end>`;
       if (log_start !== undefined) element += `<log-start>${log_start ? "yes" : "no"}</log-start>`;
-      if (profile_group) element += `<profile-setting><group><member>${profile_group}</member></group></profile-setting>`;
-      if (description) element += `<description>${description}</description>`;
+      if (profile_group) element += `<profile-setting><group><member>${xmlEscape(profile_group)}</member></group></profile-setting>`;
+      if (description) element += `<description>${xmlEscape(description)}</description>`;
       if (disabled !== undefined) element += `<disabled>${disabled ? "yes" : "no"}</disabled>`;
       if (tag && tag.length > 0) element += `<tag>${members(tag)}</tag>`;
       element += `</entry>`;
@@ -538,18 +538,18 @@ export function registerPanoramaTools(server: McpServer) {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = `/config/devices/entry[@name='localhost.localdomain']/device-group/entry[@name='${device_group}']/${rulebase}-rulebase/nat/rules`;
-      let element = `<entry name="${name}">`;
+      let element = `<entry name="${xmlEscape(name)}">`;
       element += `<from>${members(from_zones)}</from>`;
       element += `<to>${members(to_zones)}</to>`;
       element += `<source>${members(source)}</source>`;
       element += `<destination>${members(destination)}</destination>`;
-      element += `<service>${service}</service>`;
+      element += `<service>${xmlEscape(service)}</service>`;
       if (snat_type) {
         element += `<source-translation>`;
         if (snat_type === "dynamic-ip-and-port") {
           element += `<dynamic-ip-and-port>`;
           if (snat_interface) {
-            element += `<interface-address><interface>${snat_interface}</interface></interface-address>`;
+            element += `<interface-address><interface>${xmlEscape(snat_interface)}</interface></interface-address>`;
           } else if (snat_address) {
             element += `<translated-address>${members([snat_address])}</translated-address>`;
           }
@@ -560,17 +560,17 @@ export function registerPanoramaTools(server: McpServer) {
           element += `</dynamic-ip>`;
         } else if (snat_type === "static-ip") {
           element += `<static-ip>`;
-          if (snat_address) element += `<translated-address>${snat_address}</translated-address>`;
+          if (snat_address) element += `<translated-address>${xmlEscape(snat_address)}</translated-address>`;
           element += `</static-ip>`;
         }
         element += `</source-translation>`;
       }
       if (dnat_address) {
-        element += `<destination-translation><translated-address>${dnat_address}</translated-address>`;
-        if (dnat_port) element += `<translated-port>${dnat_port}</translated-port>`;
+        element += `<destination-translation><translated-address>${xmlEscape(dnat_address)}</translated-address>`;
+        if (dnat_port) element += `<translated-port>${xmlEscape(dnat_port)}</translated-port>`;
         element += `</destination-translation>`;
       }
-      if (description) element += `<description>${description}</description>`;
+      if (description) element += `<description>${xmlEscape(description)}</description>`;
       if (disabled !== undefined) element += `<disabled>${disabled ? "yes" : "no"}</disabled>`;
       element += `</entry>`;
       const result = await setConfig(xpath, element, target);

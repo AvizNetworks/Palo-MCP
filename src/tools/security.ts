@@ -1,10 +1,10 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getConfig, setConfig, deleteConfig, moveConfig, formatResponse, resolveTarget, isApiError } from "../api/client.js";
-import { firewallName } from "../schemas/panos.js";
+import { firewallName, xmlEscape } from "../schemas/panos.js";
 
 function members(items: string[]): string {
-  return items.map(i => `<member>${i}</member>`).join("");
+  return items.map(i => `<member>${xmlEscape(i)}</member>`).join("");
 }
 
 export function registerSecurityTools(server: McpServer) {
@@ -123,7 +123,7 @@ export function registerSecurityTools(server: McpServer) {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/security/rules";
-      let element = `<entry name="${name}">`;
+      let element = `<entry name="${xmlEscape(name)}">`;
       element += `<from>${members(from_zones)}</from>`;
       element += `<to>${members(to_zones)}</to>`;
       element += `<source>${members(source)}</source>`;
@@ -133,8 +133,8 @@ export function registerSecurityTools(server: McpServer) {
       element += `<action>${action}</action>`;
       if (log_end !== undefined) element += `<log-end>${log_end ? "yes" : "no"}</log-end>`;
       if (log_start !== undefined) element += `<log-start>${log_start ? "yes" : "no"}</log-start>`;
-      if (profile_group) element += `<profile-setting><group><member>${profile_group}</member></group></profile-setting>`;
-      if (description) element += `<description>${description}</description>`;
+      if (profile_group) element += `<profile-setting><group><member>${xmlEscape(profile_group)}</member></group></profile-setting>`;
+      if (description) element += `<description>${xmlEscape(description)}</description>`;
       if (disabled !== undefined) element += `<disabled>${disabled ? "yes" : "no"}</disabled>`;
       if (tag && tag.length > 0) element += `<tag>${members(tag)}</tag>`;
       element += `</entry>`;
@@ -223,15 +223,15 @@ export function registerSecurityTools(server: McpServer) {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/pbf/rules";
-      let element = `<entry name="${name}">`;
+      let element = `<entry name="${xmlEscape(name)}">`;
       element += `<from><zone>${members(from_zones)}</zone></from>`;
       element += `<source>${members(source)}</source>`;
       element += `<action>`;
       if (action === "forward") {
         element += `<forward>`;
-        if (egress_interface) element += `<egress-interface>${egress_interface}</egress-interface>`;
+        if (egress_interface) element += `<egress-interface>${xmlEscape(egress_interface)}</egress-interface>`;
         if (next_hop_type && next_hop_value) {
-          element += `<nexthop><${next_hop_type}>${next_hop_value}</${next_hop_type}></nexthop>`;
+          element += `<nexthop><${next_hop_type}>${xmlEscape(next_hop_value)}</${next_hop_type}></nexthop>`;
         }
         element += `</forward>`;
       } else if (action === "discard") {
@@ -240,7 +240,7 @@ export function registerSecurityTools(server: McpServer) {
         element += `<no-pbf/>`;
       }
       element += `</action>`;
-      if (description) element += `<description>${description}</description>`;
+      if (description) element += `<description>${xmlEscape(description)}</description>`;
       if (disabled !== undefined) element += `<disabled>${disabled ? "yes" : "no"}</disabled>`;
       element += `</entry>`;
       const result = await setConfig(xpath, element, target);
@@ -329,7 +329,7 @@ export function registerSecurityTools(server: McpServer) {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/rulebase/qos/rules";
-      let element = `<entry name="${name}">`;
+      let element = `<entry name="${xmlEscape(name)}">`;
       element += `<from>${members(from_zones)}</from>`;
       element += `<to>${members(to_zones)}</to>`;
       element += `<source>${members(source)}</source>`;
@@ -337,7 +337,7 @@ export function registerSecurityTools(server: McpServer) {
       element += `<application>${members(application)}</application>`;
       element += `<service>${members(service)}</service>`;
       element += `<action><class>${action_class}</class></action>`;
-      if (description) element += `<description>${description}</description>`;
+      if (description) element += `<description>${xmlEscape(description)}</description>`;
       if (disabled !== undefined) element += `<disabled>${disabled ? "yes" : "no"}</disabled>`;
       element += `</entry>`;
       const result = await setConfig(xpath, element, target);

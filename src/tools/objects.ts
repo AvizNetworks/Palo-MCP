@@ -1,10 +1,10 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { getConfig, setConfig, deleteConfig, formatResponse, resolveTarget, isApiError } from "../api/client.js";
-import { firewallName } from "../schemas/panos.js";
+import { firewallName, xmlEscape } from "../schemas/panos.js";
 
 function members(items: string[]): string {
-  return items.map(i => `<member>${i}</member>`).join("");
+  return items.map(i => `<member>${xmlEscape(i)}</member>`).join("");
 }
 
 export function registerObjectsTools(server: McpServer) {
@@ -98,8 +98,8 @@ export function registerObjectsTools(server: McpServer) {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/address";
-      let element = `<entry name="${name}"><${type}>${value}</${type}>`;
-      if (description) element += `<description>${description}</description>`;
+      let element = `<entry name="${xmlEscape(name)}"><${type}>${xmlEscape(value)}</${type}>`;
+      if (description) element += `<description>${xmlEscape(description)}</description>`;
       element += `</entry>`;
       const result = await setConfig(xpath, element, target);
       return formatResponse(result);
@@ -120,8 +120,8 @@ export function registerObjectsTools(server: McpServer) {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/address-group";
-      let element = `<entry name="${name}"><static>${members(memberList)}</static>`;
-      if (description) element += `<description>${description}</description>`;
+      let element = `<entry name="${xmlEscape(name)}"><static>${members(memberList)}</static>`;
+      if (description) element += `<description>${xmlEscape(description)}</description>`;
       element += `</entry>`;
       const result = await setConfig(xpath, element, target);
       return formatResponse(result);
@@ -143,8 +143,8 @@ export function registerObjectsTools(server: McpServer) {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/service";
-      let element = `<entry name="${name}"><protocol><${protocol}><port>${port}</port></${protocol}></protocol>`;
-      if (description) element += `<description>${description}</description>`;
+      let element = `<entry name="${xmlEscape(name)}"><protocol><${protocol}><port>${xmlEscape(port)}</port></${protocol}></protocol>`;
+      if (description) element += `<description>${xmlEscape(description)}</description>`;
       element += `</entry>`;
       const result = await setConfig(xpath, element, target);
       return formatResponse(result);
@@ -165,8 +165,8 @@ export function registerObjectsTools(server: McpServer) {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/service-group";
-      let element = `<entry name="${name}"><members>${members(memberList)}</members>`;
-      if (description) element += `<description>${description}</description>`;
+      let element = `<entry name="${xmlEscape(name)}"><members>${members(memberList)}</members>`;
+      if (description) element += `<description>${xmlEscape(description)}</description>`;
       element += `</entry>`;
       const result = await setConfig(xpath, element, target);
       return formatResponse(result);
@@ -275,9 +275,9 @@ export function registerObjectsTools(server: McpServer) {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const xpath = "/config/devices/entry[@name='localhost.localdomain']/vsys/entry[@name='vsys1']/tag";
-      let element = `<entry name="${name}">`;
+      let element = `<entry name="${xmlEscape(name)}">`;
       if (color) element += `<color>${color}</color>`;
-      if (comments) element += `<comments>${comments}</comments>`;
+      if (comments) element += `<comments>${xmlEscape(comments)}</comments>`;
       element += `</entry>`;
       const result = await setConfig(xpath, element, target);
       return formatResponse(result);

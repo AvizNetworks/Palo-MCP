@@ -1,7 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { z } from "zod";
 import { executeOpCommand, getConfig, setConfig, deleteConfig, formatResponse, resolveTarget, isApiError } from "../api/client.js";
-import { firewallName } from "../schemas/panos.js";
+import { firewallName, xmlEscape } from "../schemas/panos.js";
 
 export function registerNetworkTools(server: McpServer) {
   server.tool(
@@ -148,16 +148,16 @@ export function registerNetworkTools(server: McpServer) {
       if (isApiError(target)) return formatResponse(target);
       const vr = virtual_router || "default";
       const xpath = `/config/devices/entry[@name='localhost.localdomain']/network/virtual-router/entry[@name='${vr}']/routing-table/ip/static-route`;
-      let element = `<entry name="${name}">`;
-      element += `<destination>${destination}</destination>`;
+      let element = `<entry name="${xmlEscape(name)}">`;
+      element += `<destination>${xmlEscape(destination)}</destination>`;
       if (nexthop_type === "ip-address" && nexthop_value) {
-        element += `<nexthop><ip-address>${nexthop_value}</ip-address></nexthop>`;
+        element += `<nexthop><ip-address>${xmlEscape(nexthop_value)}</ip-address></nexthop>`;
       } else if (nexthop_type === "next-vr" && nexthop_value) {
-        element += `<nexthop><next-vr>${nexthop_value}</next-vr></nexthop>`;
+        element += `<nexthop><next-vr>${xmlEscape(nexthop_value)}</next-vr></nexthop>`;
       } else if (nexthop_type === "none") {
         element += `<nexthop><none/></nexthop>`;
       }
-      if (iface) element += `<interface>${iface}</interface>`;
+      if (iface) element += `<interface>${xmlEscape(iface)}</interface>`;
       if (metric !== undefined) element += `<metric>${metric}</metric>`;
       element += `</entry>`;
       const result = await setConfig(xpath, element, target);
