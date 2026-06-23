@@ -83,7 +83,7 @@ async function main() {
   console.log(key);
 
   if (args.name) {
-    await saveFirewallEntry({ name: args.name, host: args.host, api_key: key });
+    await saveFirewallEntry({ name: args.name, host: args.host, api_key: key, verify_ssl: false });
     if (isKeychainAvailable()) {
       console.error(`Saved "${args.name}" — host in firewalls.json, key in system keychain`);
     } else {

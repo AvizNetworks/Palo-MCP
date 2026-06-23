@@ -120,11 +120,11 @@ export function shouldBypassProxy(host: string, noProxyEnv: string | undefined):
 
 /**
  * Build an undici Dispatcher for a given target URL.
- * Returns an Agent with `rejectUnauthorized: false` when no proxy applies.
+ * verifySSL controls TLS certificate validation for the target firewall.
  */
-export function buildDispatcher(targetUrl: string, env: NodeJS.ProcessEnv = process.env): Dispatcher {
+export function buildDispatcher(targetUrl: string, verifySSL = false, env: NodeJS.ProcessEnv = process.env): Dispatcher {
   const proxy = resolveProxyFromEnv(env);
-  if (!proxy) return defaultAgent();
+  if (!proxy) return defaultAgent(verifySSL);
 
   let targetHost = "";
   try {
@@ -133,38 +133,37 @@ export function buildDispatcher(targetUrl: string, env: NodeJS.ProcessEnv = proc
     // fall through — if the URL is invalid undici will reject it anyway
   }
   if (!proxy.forced && targetHost && shouldBypassProxy(targetHost, env.NO_PROXY ?? env.no_proxy)) {
-    return defaultAgent();
+    return defaultAgent(verifySSL);
   }
 
   switch (proxy.scheme) {
     case "http":
     case "https":
-      return buildHttpProxyAgent(proxy);
+      return buildHttpProxyAgent(proxy, verifySSL);
     case "socks5":
     case "socks5h":
     case "socks4":
     case "socks4a":
-      return buildSocksAgent(proxy);
+      return buildSocksAgent(proxy, verifySSL);
   }
 }
 
-function defaultAgent(): Agent {
-  return new Agent({ connect: { rejectUnauthorized: false } });
+function defaultAgent(verifySSL: boolean): Agent {
+  return new Agent({ connect: { rejectUnauthorized: verifySSL } });
 }
 
-function buildHttpProxyAgent(proxy: ParsedProxy): ProxyAgent {
+function buildHttpProxyAgent(proxy: ParsedProxy, verifySSL: boolean): ProxyAgent {
   const { scheme, host, port, username, password } = proxy;
   const auth = username ? `${encodeURIComponent(username)}:${encodeURIComponent(password ?? "")}@` : "";
   const uri = `${scheme}://${auth}${host}:${port}`;
-  // requestTls keeps self-signed PanOS certs working through CONNECT tunnel.
   return new ProxyAgent({
     uri,
-    requestTls: { rejectUnauthorized: false },
+    requestTls: { rejectUnauthorized: verifySSL },
     proxyTls: { rejectUnauthorized: false },
   });
 }
 
-function buildSocksAgent(proxy: ParsedProxy): Agent {
+function buildSocksAgent(proxy: ParsedProxy, verifySSL: boolean): Agent {
   const socksType: 4 | 5 = proxy.scheme.startsWith("socks5") ? 5 : 4;
   return new Agent({
     connect: async (opts: any, callback: (err: Error | null, socket: any) => void) => {
@@ -187,7 +186,7 @@ function buildSocksAgent(proxy: ParsedProxy): Agent {
           const tlsSock = tlsConnect({
             socket,
             servername: opts.servername || hostname,
-            rejectUnauthorized: false,
+            rejectUnauthorized: verifySSL,
             ALPNProtocols: ["http/1.1"],
           });
           tlsSock.once("secureConnect", () => callback(null, tlsSock));

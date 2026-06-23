@@ -8,12 +8,14 @@ export interface FirewallEntry {
   name: string;
   host: string;
   api_key: string;
+  verify_ssl: boolean;
 }
 
 const firewallFileEntrySchema = z.object({
   name: z.string().min(1).max(63),
   host: z.string().min(1),
   api_key: z.string().optional(),
+  verify_ssl: z.boolean().optional(),
 });
 
 const firewallConfigSchema = z.object({
@@ -24,7 +26,7 @@ function sanitizeHost(host: string): string {
   return host.replace(/^https?:\/\//, "").replace(/\/+$/, "").trim();
 }
 
-let entries: Array<{ name: string; host: string }> = [];
+let entries: Array<{ name: string; host: string; verify_ssl: boolean }> = [];
 const keyMap = new Map<string, string>();
 
 const defaultConfigPath = join(homedir(), ".config", "panos-mcp", "firewalls.json");
@@ -53,6 +55,7 @@ export async function loadFirewallConfig(): Promise<void> {
     name: e.name,
     host: sanitizeHost(e.host),
     api_key: e.api_key,
+    verify_ssl: e.verify_ssl ?? false,
   }));
 
   // Auto-migrate plaintext api_key fields to OS keychain
@@ -76,7 +79,7 @@ export async function loadFirewallConfig(): Promise<void> {
     }
   }
 
-  entries = fileEntries.map(({ name, host }) => ({ name, host }));
+  entries = fileEntries.map(({ name, host, verify_ssl }) => ({ name, host, verify_ssl }));
 
   // Load keys into memory
   for (const e of entries) {
@@ -119,7 +122,7 @@ export function resolveFirewall(name?: string): FirewallEntry | null {
   // No config entries — fall back to env vars
   const host = sanitizeHost(process.env.PANOS_HOST ?? "");
   const api_key = (process.env.PANOS_API_KEY ?? "").trim();
-  if (host && api_key) return { name: "env", host, api_key };
+  if (host && api_key) return { name: "env", host, api_key, verify_ssl: false };
 
   return null;
 }
@@ -128,7 +131,7 @@ export function isMultiFirewall(): boolean {
   return entries.length > 1;
 }
 
-export function getFirewallEntries(): Array<{ name: string; host: string }> {
+export function getFirewallEntries(): Array<{ name: string; host: string; verify_ssl: boolean }> {
   return entries;
 }
 
@@ -163,7 +166,7 @@ export async function saveFirewallEntry(entry: FirewallEntry): Promise<void> {
 
   // Update in-memory state directly (avoids re-reading file and keychain)
   const memIdx = entries.findIndex((e) => e.name === entry.name);
-  if (memIdx >= 0) entries[memIdx] = { name: entry.name, host: entry.host };
-  else entries.push({ name: entry.name, host: entry.host });
+  if (memIdx >= 0) entries[memIdx] = { name: entry.name, host: entry.host, verify_ssl: entry.verify_ssl };
+  else entries.push({ name: entry.name, host: entry.host, verify_ssl: entry.verify_ssl });
   keyMap.set(entry.name, entry.api_key);
 }

@@ -1,6 +1,6 @@
 {
   "name": "panos-mcp",
-  "version": "1.3.17",
+  "version": "1.3.19",
   "description": "MCP server for Palo Alto Networks PanOS firewalls",
   "type": "module",
   "main": "dist/index.js",
@@ -29,9 +29,9 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.26.0",
     "@napi-rs/keyring": "^1.2.0",
-    "fast-xml-parser": "^4.5.1",
+    "fast-xml-parser": "^5.9.3",
     "socks": "^2.8.3",
-    "undici": "^7.3.0",
+    "undici": "^8.5.0",
     "zod": "^4.0"
   },
   "devDependencies": {

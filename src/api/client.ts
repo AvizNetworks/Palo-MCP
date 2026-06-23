@@ -17,6 +17,7 @@ export interface ApiResponse {
 export interface FirewallTarget {
   host: string;
   apiKey: string;
+  verifySSL: boolean;
 }
 
 export function resolveTarget(firewallParam?: string): FirewallTarget | ApiResponse {
@@ -41,7 +42,7 @@ export function resolveTarget(firewallParam?: string): FirewallTarget | ApiRespo
     };
   }
 
-  return { host: entry.host, apiKey: entry.api_key };
+  return { host: entry.host, apiKey: entry.api_key, verifySSL: entry.verify_ssl };
 }
 
 export function isApiError(result: FirewallTarget | ApiResponse): result is ApiResponse {
@@ -57,11 +58,15 @@ function connectError(error: unknown): string {
   return `Error connecting to firewall: ${msg}${causeStr ? ` (${causeStr})` : ""}${proxyStr}`;
 }
 
-async function makeRequest(url: string): Promise<ApiResponse> {
-  const dispatcher = buildDispatcher(url);
+async function makeRequest(url: string, apiKey = "", verifySSL = false): Promise<ApiResponse> {
+  const dispatcher = buildDispatcher(url, verifySSL);
+
+  const headers: Record<string, string> = {};
+  if (apiKey) headers["X-PAN-KEY"] = apiKey;
 
   const response = await fetch(url, {
     method: "GET",
+    headers,
     dispatcher,
   });
 
@@ -112,10 +117,10 @@ export async function executeOpCommand(cmd: string, target?: FirewallTarget): Pr
     target = resolved;
   }
 
-  const url = `https://${target.host}/api/?type=op&cmd=${encodeURIComponent(cmd)}&key=${target.apiKey}`;
+  const url = `https://${target.host}/api/?type=op&cmd=${encodeURIComponent(cmd)}`;
 
   try {
-    return await makeRequest(url);
+    return await makeRequest(url, target.apiKey, target.verifySSL);
   } catch (error) {
     return {
       success: false,
@@ -131,14 +136,14 @@ export async function executeLogQuery(
   target: FirewallTarget
 ): Promise<ApiResponse> {
   // Step 1: Submit log query (type=log)
-  let url = `https://${target.host}/api/?type=log&log-type=${encodeURIComponent(logType)}&nlogs=${nlogs}&key=${target.apiKey}`;
+  let url = `https://${target.host}/api/?type=log&log-type=${encodeURIComponent(logType)}&nlogs=${nlogs}`;
   if (query) {
     url += `&query=${encodeURIComponent(query)}`;
   }
 
   let submitResult: ApiResponse;
   try {
-    submitResult = await makeRequest(url);
+    submitResult = await makeRequest(url, target.apiKey, target.verifySSL);
   } catch (error) {
     return {
       success: false,
@@ -154,7 +159,7 @@ export async function executeLogQuery(
   }
 
   // Step 2: Poll for results (type=log&action=get)
-  const pollUrl = `https://${target.host}/api/?type=log&action=get&job-id=${jobId}&key=${target.apiKey}`;
+  const pollUrl = `https://${target.host}/api/?type=log&action=get&job-id=${jobId}`;
   const maxAttempts = 30;
   const pollIntervalMs = 1000;
 
@@ -163,7 +168,7 @@ export async function executeLogQuery(
 
     let pollResult: ApiResponse;
     try {
-      pollResult = await makeRequest(pollUrl);
+      pollResult = await makeRequest(pollUrl, target.apiKey, target.verifySSL);
     } catch (error) {
       return {
         success: false,
@@ -189,10 +194,10 @@ export async function getConfig(xpath: string, target?: FirewallTarget): Promise
     target = resolved;
   }
 
-  const url = `https://${target.host}/api/?type=config&action=get&xpath=${encodeURIComponent(xpath)}&key=${target.apiKey}`;
+  const url = `https://${target.host}/api/?type=config&action=get&xpath=${encodeURIComponent(xpath)}`;
 
   try {
-    return await makeRequest(url);
+    return await makeRequest(url, target.apiKey, target.verifySSL);
   } catch (error) {
     return {
       success: false,
@@ -208,10 +213,10 @@ export async function setConfig(xpath: string, element: string, target?: Firewal
     target = resolved;
   }
 
-  const url = `https://${target.host}/api/?type=config&action=set&xpath=${encodeURIComponent(xpath)}&element=${encodeURIComponent(element)}&key=${target.apiKey}`;
+  const url = `https://${target.host}/api/?type=config&action=set&xpath=${encodeURIComponent(xpath)}&element=${encodeURIComponent(element)}`;
 
   try {
-    return await makeRequest(url);
+    return await makeRequest(url, target.apiKey, target.verifySSL);
   } catch (error) {
     return {
       success: false,
@@ -227,10 +232,10 @@ export async function deleteConfig(xpath: string, target?: FirewallTarget): Prom
     target = resolved;
   }
 
-  const url = `https://${target.host}/api/?type=config&action=delete&xpath=${encodeURIComponent(xpath)}&key=${target.apiKey}`;
+  const url = `https://${target.host}/api/?type=config&action=delete&xpath=${encodeURIComponent(xpath)}`;
 
   try {
-    return await makeRequest(url);
+    return await makeRequest(url, target.apiKey, target.verifySSL);
   } catch (error) {
     return {
       success: false,
@@ -246,13 +251,13 @@ export async function moveConfig(xpath: string, where: string, dst?: string, tar
     target = resolved;
   }
 
-  let url = `https://${target.host}/api/?type=config&action=move&xpath=${encodeURIComponent(xpath)}&where=${encodeURIComponent(where)}&key=${target.apiKey}`;
+  let url = `https://${target.host}/api/?type=config&action=move&xpath=${encodeURIComponent(xpath)}&where=${encodeURIComponent(where)}`;
   if (dst) {
     url += `&dst=${encodeURIComponent(dst)}`;
   }
 
   try {
-    return await makeRequest(url);
+    return await makeRequest(url, target.apiKey, target.verifySSL);
   } catch (error) {
     return {
       success: false,
@@ -268,10 +273,10 @@ export async function commitConfig(cmd: string, target?: FirewallTarget): Promis
     target = resolved;
   }
 
-  const url = `https://${target.host}/api/?type=commit&cmd=${encodeURIComponent(cmd)}&key=${target.apiKey}`;
+  const url = `https://${target.host}/api/?type=commit&cmd=${encodeURIComponent(cmd)}`;
 
   try {
-    return await makeRequest(url);
+    return await makeRequest(url, target.apiKey, target.verifySSL);
   } catch (error) {
     return {
       success: false,
@@ -287,10 +292,10 @@ export async function commitAll(cmd: string, target?: FirewallTarget): Promise<A
     target = resolved;
   }
 
-  const url = `https://${target.host}/api/?type=commit&action=all&cmd=${encodeURIComponent(cmd)}&key=${target.apiKey}`;
+  const url = `https://${target.host}/api/?type=commit&action=all&cmd=${encodeURIComponent(cmd)}`;
 
   try {
-    return await makeRequest(url);
+    return await makeRequest(url, target.apiKey, target.verifySSL);
   } catch (error) {
     return {
       success: false,
