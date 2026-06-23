@@ -260,4 +260,4 @@ To report a security vulnerability, please [open a GitHub issue](https://github.
 
 ## License
 
-ISC
+MIT
