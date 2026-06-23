@@ -14,7 +14,7 @@ export function registerNatTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get NAT Rules", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -42,7 +42,7 @@ export function registerNatTools(server: McpServer) {
       disabled: z.boolean().optional().describe("Create rule in disabled state"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Add NAT Rule", readOnlyHint: false, destructiveHint: true },
     async ({ name, from_zones, to_zones, source, destination, service, snat_type, snat_address, snat_interface, dnat_address, dnat_port, description, disabled, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -96,7 +96,7 @@ export function registerNatTools(server: McpServer) {
       destination: z.string().optional().describe("Reference rule name (required when 'where' is 'before' or 'after')"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Move NAT Rule", readOnlyHint: false, destructiveHint: true },
     async ({ name, where, destination, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -116,7 +116,7 @@ export function registerNatTools(server: McpServer) {
       name: z.string().min(1).max(63).describe("Rule name to delete"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Delete NAT Rule", readOnlyHint: false, destructiveHint: true },
     async ({ name, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -134,7 +134,7 @@ export function registerNatTools(server: McpServer) {
       disabled: z.boolean().describe("true to disable the rule, false to enable it"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Set NAT Rule Disabled", readOnlyHint: false, destructiveHint: true },
     async ({ name, disabled, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);

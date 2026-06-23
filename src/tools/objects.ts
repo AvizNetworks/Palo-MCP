@@ -14,7 +14,7 @@ export function registerObjectsTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get Address Objects", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -29,7 +29,7 @@ export function registerObjectsTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get Address Groups", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -44,7 +44,7 @@ export function registerObjectsTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get Service Objects", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -59,7 +59,7 @@ export function registerObjectsTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get Service Groups", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -74,7 +74,7 @@ export function registerObjectsTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get Application Filters", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -93,7 +93,7 @@ export function registerObjectsTools(server: McpServer) {
       description: z.string().max(1023).optional().describe("Optional description"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Add Address Object", readOnlyHint: false, destructiveHint: true },
     async ({ name, type, value, description, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -115,7 +115,7 @@ export function registerObjectsTools(server: McpServer) {
       description: z.string().max(1023).optional().describe("Optional description"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Add Address Group", readOnlyHint: false, destructiveHint: true },
     async ({ name, members: memberList, description, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -138,7 +138,7 @@ export function registerObjectsTools(server: McpServer) {
       description: z.string().max(1023).optional().describe("Optional description"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Add Service Object", readOnlyHint: false, destructiveHint: true },
     async ({ name, protocol, port, description, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -160,7 +160,7 @@ export function registerObjectsTools(server: McpServer) {
       description: z.string().max(1023).optional().describe("Optional description"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Add Service Group", readOnlyHint: false, destructiveHint: true },
     async ({ name, members: memberList, description, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -180,7 +180,7 @@ export function registerObjectsTools(server: McpServer) {
       name: z.string().min(1).max(63).describe("Address object name to delete"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Delete Address Object", readOnlyHint: false, destructiveHint: true },
     async ({ name, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -197,7 +197,7 @@ export function registerObjectsTools(server: McpServer) {
       name: z.string().min(1).max(63).describe("Address group name to delete"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Delete Address Group", readOnlyHint: false, destructiveHint: true },
     async ({ name, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -214,7 +214,7 @@ export function registerObjectsTools(server: McpServer) {
       name: z.string().min(1).max(63).describe("Service object name to delete"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Delete Service Object", readOnlyHint: false, destructiveHint: true },
     async ({ name, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -231,7 +231,7 @@ export function registerObjectsTools(server: McpServer) {
       name: z.string().min(1).max(63).describe("Service group name to delete"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Delete Service Group", readOnlyHint: false, destructiveHint: true },
     async ({ name, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -249,7 +249,7 @@ export function registerObjectsTools(server: McpServer) {
     {
       firewall: firewallName,
     },
-    { readOnlyHint: true, destructiveHint: false },
+    { title: "Get Tags", readOnlyHint: true, destructiveHint: false },
     async ({ firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -270,7 +270,7 @@ export function registerObjectsTools(server: McpServer) {
       comments: z.string().max(1023).optional().describe("Optional comments"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Add Tag", readOnlyHint: false, destructiveHint: true },
     async ({ name, color, comments, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -291,7 +291,7 @@ export function registerObjectsTools(server: McpServer) {
       name: z.string().min(1).max(127).describe("Tag name to delete"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Delete Tag", readOnlyHint: false, destructiveHint: true },
     async ({ name, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);

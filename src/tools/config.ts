@@ -12,7 +12,7 @@ export function registerConfigTools(server: McpServer) {
       element: xmlElement.describe("XML element to set at the xpath location (e.g., '<entry name=\"test-addr\"><ip-netmask>10.0.0.1/32</ip-netmask></entry>')"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Set Config", readOnlyHint: false, destructiveHint: true },
     async ({ xpath, element, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -28,7 +28,7 @@ export function registerConfigTools(server: McpServer) {
       xpath: configXpath.describe("XPath to the configuration element to delete (e.g., '/config/devices/entry[@name=\"localhost.localdomain\"]/vsys/entry[@name=\"vsys1\"]/address/entry[@name=\"test-addr\"]')"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Delete Config", readOnlyHint: false, destructiveHint: true },
     async ({ xpath, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -45,7 +45,7 @@ export function registerConfigTools(server: McpServer) {
       partial_admin: partialAdmin.describe("Commit only changes made by this admin user"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Commit", readOnlyHint: false, destructiveHint: true },
     async ({ description, partial_admin, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -70,7 +70,7 @@ export function registerConfigTools(server: McpServer) {
       partial_admin: partialAdmin.describe("Commit only changes made by this admin user"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Panorama Commit", readOnlyHint: false, destructiveHint: true },
     async ({ description, partial_admin, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
@@ -96,7 +96,7 @@ export function registerConfigTools(server: McpServer) {
       include_template: z.boolean().optional().describe("Include template stack (default: false)"),
       firewall: firewallName,
     },
-    { readOnlyHint: false, destructiveHint: true },
+    { title: "Panorama Push To Devices", readOnlyHint: false, destructiveHint: true },
     async ({ device_group, description, include_template, firewall }) => {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
