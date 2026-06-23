@@ -3,6 +3,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { loadFirewallConfig } from "./config/firewalls.js";
+import { isKeychainAvailable } from "./config/keychain.js";
 import { describeProxy } from "./api/proxy.js";
 
 import { registerFirewallTools } from "./tools/firewalls.js";
@@ -24,8 +25,25 @@ import { registerUtilityTools } from "./tools/utility.js";
 
 const server = new McpServer({
   name: "panos-mcp",
-  version: "1.3.19",
+  version: "1.3.20",
 });
+
+// Wrap all tool handlers to catch unexpected errors cleanly
+const _tool = server.tool.bind(server);
+(server.tool as any) = function (...args: any[]) {
+  const last = args.length - 1;
+  const handler = args[last];
+  args[last] = async (...hArgs: any[]) => {
+    try {
+      return await handler(...hArgs);
+    } catch (error) {
+      return {
+        content: [{ type: "text" as const, text: `Error: ${error instanceof Error ? error.message : String(error)}` }],
+      };
+    }
+  };
+  return (_tool as (...a: any[]) => any)(...args);
+};
 
 // Register all tools
 registerFirewallTools(server);
@@ -47,6 +65,13 @@ registerUtilityTools(server);
 
 async function main() {
   await loadFirewallConfig();
+  if (!isKeychainAvailable()) {
+    process.stderr.write(
+      "[panos-mcp] WARNING: System keychain unavailable — API keys are stored in plaintext. " +
+      "Install a keychain provider (macOS Keychain, libsecret on Linux, Windows Credential Manager) " +
+      "and re-run `panos-mcp keygen` to migrate keys to secure storage.\n"
+    );
+  }
   const proxy = describeProxy();
   if (proxy) {
     console.error(`PanOS proxy: ${proxy}`);

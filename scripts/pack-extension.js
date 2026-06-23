@@ -1,12 +1,17 @@
 import { cpSync, rmSync } from "fs";
-import { execSync } from "child_process";
+import { spawnSync } from "child_process";
 
-// Copy manifest and icon into the extension directory
+// Copy manifest, icon, and license into the extension directory
 cpSync("manifest.json", "extension/manifest.json");
 cpSync("icon.png", "extension/icon.png");
+cpSync("LICENSE", "extension/LICENSE");
 
-// Create .mcpb zip from extension/ contents
-execSync("cd extension && zip -r ../panos-mcp.mcpb manifest.json icon.png server/index.cjs");
+// Create .mcpb zip from extension/ contents (no shell — cwd handles the directory)
+const result = spawnSync("zip", ["-r", "../panos-mcp.mcpb", "manifest.json", "icon.png", "LICENSE", "server/index.cjs"], {
+  cwd: "extension",
+  stdio: "inherit",
+});
+if (result.status !== 0) process.exit(result.status ?? 1);
 
 // Clean up the extension directory
 rmSync("extension", { recursive: true, force: true });

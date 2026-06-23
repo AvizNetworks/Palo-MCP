@@ -78,7 +78,16 @@ async function makeRequest(url: string, apiKey = "", verifySSL = false): Promise
   }
 
   const xmlText = await response.text();
-  const parsed = xmlParser.parse(xmlText);
+
+  let parsed: any;
+  try {
+    parsed = xmlParser.parse(xmlText);
+  } catch (err) {
+    return {
+      success: false,
+      error: `Failed to parse XML response: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
 
   if (parsed.response?.["@_status"] === "error") {
     return {
