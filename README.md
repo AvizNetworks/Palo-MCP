@@ -42,6 +42,14 @@ Talk to your firewall in plain English. Some examples:
 - A PanOS firewall or Panorama appliance with API access enabled
 - A PanOS API key ([how to generate](https://docs.paloaltonetworks.com/pan-os/11-1/pan-os-panorama-api/get-started-with-the-pan-os-xml-api/get-your-api-key))
 
+To generate a PanOS API key directly from a firewall, use the XML API keygen endpoint:
+
+```bash
+curl -k -X GET 'https://<FIREWALL_IP_OR_HOST>/api/?type=keygen&user=<USERNAME>&password=<PASSWORD>'
+```
+
+This sends credentials in the request URL and skips TLS certificate verification. Use it only from a trusted management network, and prefer a scoped or read-only API key where possible.
+
 ## Quick Start
 
 > **Single firewall vs. multi-firewall:** The Desktop Extension supports **one firewall** configured at install time. For managing multiple firewalls or Panorama instances simultaneously, use the npx or Claude Code CLI installation with the `panos-keygen` setup described in [Multiple firewalls](#multiple-firewalls).
