@@ -19,6 +19,7 @@
     "test": "vitest run",
     "bundle": "node scripts/bundle.js",
     "pack:extension": "npm run build && npm run bundle && node scripts/pack-extension.js",
+    "release": "node scripts/release.js",
     "prepare": "npm run build"
   },
   "keywords": [
