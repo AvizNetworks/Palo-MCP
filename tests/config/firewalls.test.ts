@@ -57,7 +57,7 @@ describe("firewalls config", () => {
     it("resolves to env entry when env vars are set", () => {
       process.env.PANOS_HOST = "10.0.0.1";
       process.env.PANOS_API_KEY = "key123";
-      expect(resolveFirewall()).toEqual({ name: "env", host: "10.0.0.1", api_key: "key123" });
+      expect(resolveFirewall()).toEqual({ name: "env", host: "10.0.0.1", api_key: "key123", verify_ssl: false });
     });
 
     it("isMultiFirewall returns false", () => {
@@ -78,11 +78,11 @@ describe("firewalls config", () => {
     });
 
     it("resolves without name (defaults to single entry)", () => {
-      expect(resolveFirewall()).toEqual({ name: "fw1", host: "10.0.1.1", api_key: "key1" });
+      expect(resolveFirewall()).toEqual({ name: "fw1", host: "10.0.1.1", api_key: "key1", verify_ssl: false });
     });
 
     it("resolves by name", () => {
-      expect(resolveFirewall("fw1")).toEqual({ name: "fw1", host: "10.0.1.1", api_key: "key1" });
+      expect(resolveFirewall("fw1")).toEqual({ name: "fw1", host: "10.0.1.1", api_key: "key1", verify_ssl: false });
     });
 
     it("returns null for unknown name", () => {
@@ -113,7 +113,7 @@ describe("firewalls config", () => {
     });
 
     it("resolves by name", () => {
-      expect(resolveFirewall("fw2")).toEqual({ name: "fw2", host: "10.0.2.2", api_key: "key2" });
+      expect(resolveFirewall("fw2")).toEqual({ name: "fw2", host: "10.0.2.2", api_key: "key2", verify_ssl: false });
     });
 
     it("returns null for unknown name", () => {
@@ -163,6 +163,7 @@ describe("firewalls config", () => {
         name: "fw1",
         host: "10.0.1.1",
         api_key: "migrated-key",
+        verify_ssl: false,
       });
     });
 
@@ -197,6 +198,7 @@ describe("firewalls config", () => {
         name: "fw1",
         host: "10.0.1.1",
         api_key: "plaintext-key",
+        verify_ssl: false,
       });
     });
 
@@ -216,7 +218,7 @@ describe("firewalls config", () => {
     });
 
     it("saves api_key to keychain and writes host-only entry to JSON", async () => {
-      await saveFirewallEntry({ name: "new-fw", host: "10.0.3.1", api_key: "key3" });
+      await saveFirewallEntry({ name: "new-fw", host: "10.0.3.1", api_key: "key3", verify_ssl: false });
 
       expect(vi.mocked(setKey)).toHaveBeenCalledWith("new-fw", "key3");
       const data = JSON.parse(readFileSync(tmpConfig, "utf-8"));
@@ -227,7 +229,7 @@ describe("firewalls config", () => {
     it("writes api_key to JSON when keychain unavailable", async () => {
       vi.mocked(isKeychainAvailable).mockReturnValue(false);
 
-      await saveFirewallEntry({ name: "new-fw", host: "10.0.3.1", api_key: "key3" });
+      await saveFirewallEntry({ name: "new-fw", host: "10.0.3.1", api_key: "key3", verify_ssl: false });
 
       expect(vi.mocked(setKey)).not.toHaveBeenCalled();
       const data = JSON.parse(readFileSync(tmpConfig, "utf-8"));
@@ -237,7 +239,7 @@ describe("firewalls config", () => {
     it("appends to existing firewalls.json", async () => {
       writeConfig({ firewalls: [{ name: "fw1", host: "10.0.1.1" }] });
 
-      await saveFirewallEntry({ name: "fw2", host: "10.0.2.2", api_key: "key2" });
+      await saveFirewallEntry({ name: "fw2", host: "10.0.2.2", api_key: "key2", verify_ssl: false });
 
       const data = JSON.parse(readFileSync(tmpConfig, "utf-8"));
       expect(data.firewalls).toHaveLength(2);
@@ -247,7 +249,7 @@ describe("firewalls config", () => {
     it("updates existing entry by name", async () => {
       writeConfig({ firewalls: [{ name: "fw1", host: "10.0.1.1" }] });
 
-      await saveFirewallEntry({ name: "fw1", host: "10.0.1.1", api_key: "new-key" });
+      await saveFirewallEntry({ name: "fw1", host: "10.0.1.1", api_key: "new-key", verify_ssl: false });
 
       expect(vi.mocked(setKey)).toHaveBeenCalledWith("fw1", "new-key");
       const data = JSON.parse(readFileSync(tmpConfig, "utf-8"));
@@ -258,11 +260,11 @@ describe("firewalls config", () => {
       await loadFirewallConfig();
       expect(getFirewallEntries()).toHaveLength(0);
 
-      await saveFirewallEntry({ name: "fw1", host: "10.0.1.1", api_key: "key1" });
+      await saveFirewallEntry({ name: "fw1", host: "10.0.1.1", api_key: "key1", verify_ssl: false });
 
       expect(getFirewallEntries()).toHaveLength(1);
       expect(getFirewallEntries()[0].name).toBe("fw1");
-      expect(resolveFirewall("fw1")).toEqual({ name: "fw1", host: "10.0.1.1", api_key: "key1" });
+      expect(resolveFirewall("fw1")).toEqual({ name: "fw1", host: "10.0.1.1", api_key: "key1", verify_ssl: false });
     });
   });
 });
