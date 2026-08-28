@@ -1,90 +1,77 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { executeLogQuery, formatResponse, resolveTarget, isApiError } from "../api/client.js";
-import { nlogsSchema, logQuery, firewallName } from "../schemas/panos.js";
+import { nlogsSchema, logQuery, logHoursSchema, firewallName } from "../schemas/panos.js";
+
+function registerLogTool(
+  server: McpServer,
+  name: string,
+  logType: string,
+  description: string,
+  queryHint: string
+) {
+  server.tool(
+    name,
+    description,
+    {
+      nlogs: nlogsSchema,
+      hours: logHoursSchema,
+      query: logQuery.describe(queryHint),
+      firewall: firewallName,
+    },
+    { title: name.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()), readOnlyHint: true, destructiveHint: false },
+    async ({ nlogs, hours, query, firewall }) => {
+      const target = resolveTarget(firewall);
+      if (isApiError(target)) return formatResponse(target);
+      const result = await executeLogQuery(
+        logType,
+        nlogs || 20,
+        query,
+        target,
+        hours
+      );
+      return formatResponse(result);
+    }
+  );
+}
 
 export function registerLogsTools(server: McpServer) {
-  server.tool(
+  registerLogTool(
+    server,
     "get_traffic_logs",
-    "[READ-ONLY] Retrieves recent traffic logs from the firewall using the PanOS log API (type=log). Supports filtering by query and limiting result count.",
-    {
-      nlogs: nlogsSchema,
-      query: logQuery.describe("Filter query (e.g., '( addr.src in 10.0.0.0/8 )')"),
-      firewall: firewallName,
-    },
-    { title: "Get Traffic Logs", readOnlyHint: true, destructiveHint: false },
-    async ({ nlogs, query, firewall }) => {
-      const target = resolveTarget(firewall);
-      if (isApiError(target)) return formatResponse(target);
-      const result = await executeLogQuery("traffic", nlogs || 20, query, target);
-      return formatResponse(result);
-    }
+    "traffic",
+    "[READ-ONLY] Retrieves traffic logs from the PanOS log API. Use hours for a time window (e.g. 24 = last 24h) and optional query filter.",
+    "Optional extra filter (e.g., '( action eq deny )')"
   );
 
-  server.tool(
+  registerLogTool(
+    server,
     "get_threat_logs",
-    "[READ-ONLY] Retrieves recent threat logs from the firewall using the PanOS log API (type=log). Supports filtering by query and limiting result count.",
-    {
-      nlogs: nlogsSchema,
-      query: logQuery.describe("Filter query (e.g., '( severity eq critical )')"),
-      firewall: firewallName,
-    },
-    { title: "Get Threat Logs", readOnlyHint: true, destructiveHint: false },
-    async ({ nlogs, query, firewall }) => {
-      const target = resolveTarget(firewall);
-      if (isApiError(target)) return formatResponse(target);
-      const result = await executeLogQuery("threat", nlogs || 20, query, target);
-      return formatResponse(result);
-    }
+    "threat",
+    "[READ-ONLY] Retrieves threat logs from the PanOS log API. Use hours for a time window and optional query filter.",
+    "Optional extra filter (e.g., '( severity eq critical )')"
   );
 
-  server.tool(
+  registerLogTool(
+    server,
     "get_system_logs",
-    "[READ-ONLY] Retrieves recent system logs from the firewall using the PanOS log API (type=log). Supports filtering by query and limiting result count.",
-    {
-      nlogs: nlogsSchema,
-      query: logQuery.describe("Filter query (e.g., '( severity eq critical )')"),
-      firewall: firewallName,
-    },
-    { title: "Get System Logs", readOnlyHint: true, destructiveHint: false },
-    async ({ nlogs, query, firewall }) => {
-      const target = resolveTarget(firewall);
-      if (isApiError(target)) return formatResponse(target);
-      const result = await executeLogQuery("system", nlogs || 20, query, target);
-      return formatResponse(result);
-    }
+    "system",
+    "[READ-ONLY] Retrieves system logs from the PanOS log API. Use hours for a time window (e.g. 24 = last 24h) and optional query filter.",
+    "Optional extra filter (e.g., '( subtype eq commit )')"
   );
 
-  server.tool(
+  registerLogTool(
+    server,
     "get_config_logs",
-    "[READ-ONLY] Retrieves recent configuration change logs from the firewall using the PanOS log API (type=log). Supports filtering by query and limiting result count.",
-    {
-      nlogs: nlogsSchema,
-      query: logQuery.describe("Filter query"),
-      firewall: firewallName,
-    },
-    { title: "Get Config Logs", readOnlyHint: true, destructiveHint: false },
-    async ({ nlogs, query, firewall }) => {
-      const target = resolveTarget(firewall);
-      if (isApiError(target)) return formatResponse(target);
-      const result = await executeLogQuery("config", nlogs || 20, query, target);
-      return formatResponse(result);
-    }
+    "config",
+    "[READ-ONLY] Retrieves configuration change logs from the PanOS log API. Use hours for a time window and optional query filter.",
+    "Optional extra filter"
   );
 
-  server.tool(
+  registerLogTool(
+    server,
     "get_url_filter_logs",
-    "[READ-ONLY] Retrieves recent URL filtering logs from the firewall using the PanOS log API (type=log&log-type=url). Shows URLs visited and actions taken (allow/block/continue/override) by URL filtering policy.",
-    {
-      nlogs: nlogsSchema,
-      query: logQuery.describe("Filter query (e.g., '( action eq block )' or '( category eq malware )')"),
-      firewall: firewallName,
-    },
-    { title: "Get URL Filter Logs", readOnlyHint: true, destructiveHint: false },
-    async ({ nlogs, query, firewall }) => {
-      const target = resolveTarget(firewall);
-      if (isApiError(target)) return formatResponse(target);
-      const result = await executeLogQuery("url", nlogs || 20, query, target);
-      return formatResponse(result);
-    }
+    "url",
+    "[READ-ONLY] Retrieves URL filtering logs from the PanOS log API. Use hours for a time window and optional query filter.",
+    "Optional extra filter (e.g., '( action eq block )')"
   );
 }

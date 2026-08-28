@@ -26,6 +26,57 @@ function sanitizeHost(host: string): string {
   return host.replace(/^https?:\/\//, "").replace(/\/+$/, "").trim();
 }
 
+function parseEnvBool(value: string | undefined, defaultValue: boolean): boolean {
+  if (value === undefined || value.trim() === "") return defaultValue;
+  return ["1", "true", "yes", "on"].includes(value.trim().toLowerCase());
+}
+
+/** Runtime-only firewall (NCP LocalMCP env); does not write firewalls.json. */
+export function setRuntimeFirewall(entry: FirewallEntry): void {
+  const host = sanitizeHost(entry.host);
+  entries = [{ name: entry.name, host, verify_ssl: entry.verify_ssl }];
+  keyMap.clear();
+  keyMap.set(entry.name, entry.api_key);
+}
+
+/**
+ * Seed a single firewall from NCP container env (PANOS_*).
+ * Prefer API key; otherwise keygen with username/password.
+ * TLS verify defaults to true (lab can set PANOS_VERIFY_TLS=false).
+ */
+export async function ensureNcpEnvFirewall(): Promise<void> {
+  if (entries.length > 0) return;
+
+  const host = sanitizeHost(process.env.PANOS_HOST ?? "");
+  if (!host) return;
+
+  const verify_ssl = parseEnvBool(process.env.PANOS_VERIFY_TLS, true);
+  let api_key = (process.env.PANOS_API_KEY ?? "").trim();
+
+  if (!api_key) {
+    const username = (process.env.PANOS_USERNAME ?? "").trim();
+    const password = process.env.PANOS_PASSWORD ?? "";
+    if (username && password) {
+      const { generateApiKey } = await import("../api/client.js");
+      const result = await generateApiKey(host, username, password, verify_ssl);
+      if (!result.success || !result.data?.key) {
+        throw new Error(
+          `PAN-OS keygen failed: ${result.error || "no key returned"}`
+        );
+      }
+      api_key = String(result.data.key);
+      process.stderr.write("[ncp-paloalto-mcp] Generated API key from PANOS_USERNAME/PASSWORD\n");
+    }
+  }
+
+  if (!api_key) return;
+
+  setRuntimeFirewall({ name: "env", host, api_key, verify_ssl });
+  process.stderr.write(
+    `[ncp-paloalto-mcp] Using firewall env host=${host} verify_ssl=${verify_ssl}\n`
+  );
+}
+
 let entries: Array<{ name: string; host: string; verify_ssl: boolean }> = [];
 const keyMap = new Map<string, string>();
 
@@ -122,7 +173,15 @@ export function resolveFirewall(name?: string): FirewallEntry | null {
   // No config entries — fall back to env vars
   const host = sanitizeHost(process.env.PANOS_HOST ?? "");
   const api_key = (process.env.PANOS_API_KEY ?? "").trim();
-  if (host && api_key) return { name: "env", host, api_key, verify_ssl: false };
+  // Aviz/NCP default: verify TLS unless explicitly disabled (lab self-signed).
+  if (host && api_key) {
+    return {
+      name: "env",
+      host,
+      api_key,
+      verify_ssl: parseEnvBool(process.env.PANOS_VERIFY_TLS, true),
+    };
+  }
 
   return null;
 }
