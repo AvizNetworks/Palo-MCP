@@ -42,6 +42,7 @@ describe("firewalls config", () => {
     delete process.env.PANOS_FIREWALLS_CONFIG;
     delete process.env.PANOS_HOST;
     delete process.env.PANOS_API_KEY;
+    delete process.env.PANOS_VERIFY_TLS;
   });
 
   describe("no config file — env var fallback", () => {
@@ -57,7 +58,15 @@ describe("firewalls config", () => {
     it("resolves to env entry when env vars are set", () => {
       process.env.PANOS_HOST = "10.0.0.1";
       process.env.PANOS_API_KEY = "key123";
-      expect(resolveFirewall()).toEqual({ name: "env", host: "10.0.0.1", api_key: "key123", verify_ssl: false });
+      expect(resolveFirewall()).toEqual({ name: "env", host: "10.0.0.1", api_key: "key123", verify_ssl: true });
+    });
+
+    it("honors PANOS_VERIFY_TLS=false for lab self-signed certs", () => {
+      process.env.PANOS_HOST = "10.0.0.1";
+      process.env.PANOS_API_KEY = "key123";
+      process.env.PANOS_VERIFY_TLS = "false";
+      expect(resolveFirewall()?.verify_ssl).toBe(false);
+      delete process.env.PANOS_VERIFY_TLS;
     });
 
     it("isMultiFirewall returns false", () => {

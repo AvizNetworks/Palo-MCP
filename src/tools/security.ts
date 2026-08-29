@@ -114,7 +114,7 @@ export function registerSecurityTools(server: McpServer) {
       log_start: z.boolean().optional().describe("Log at session start"),
       profile_group: z.string().optional().describe("Security profile group name to apply"),
       description: z.string().max(1023).optional().describe("Optional description"),
-      disabled: z.boolean().optional().describe("Create rule in disabled state"),
+      disabled: z.boolean().optional().describe("Create rule in disabled state (Aviz default: true)"),
       tag: z.array(z.string().min(1)).optional().describe("Tags to apply to the rule"),
       firewall: firewallName,
     },
@@ -135,7 +135,8 @@ export function registerSecurityTools(server: McpServer) {
       if (log_start !== undefined) element += `<log-start>${log_start ? "yes" : "no"}</log-start>`;
       if (profile_group) element += `<profile-setting><group><member>${xmlEscape(profile_group)}</member></group></profile-setting>`;
       if (description) element += `<description>${xmlEscape(description)}</description>`;
-      if (disabled !== undefined) element += `<disabled>${disabled ? "yes" : "no"}</disabled>`;
+      const disabledFlag = disabled ?? true;
+      element += `<disabled>${disabledFlag ? "yes" : "no"}</disabled>`;
       if (tag && tag.length > 0) element += `<tag>${members(tag)}</tag>`;
       element += `</entry>`;
       const result = await setConfig(xpath, element, target);

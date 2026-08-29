@@ -1,5 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { executeOpCommand, formatResponse, resolveTarget, isApiError } from "../api/client.js";
+import { parseSystemResources } from "../parse/systemResources.js";
 import { firewallName } from "../schemas/panos.js";
 
 export function registerSystemTools(server: McpServer) {
@@ -53,7 +54,7 @@ export function registerSystemTools(server: McpServer) {
 
   server.tool(
     "get_system_resources",
-    "[READ-ONLY] Retrieves system resource utilization including CPU, memory, and disk usage. Executes: show system resources.",
+    "[READ-ONLY] Retrieves labeled CPU, memory, load, and top-process metrics from show system resources. Response includes labeled_summary (CPU - User, Memory - Used, top_cpu_processes) plus structured system_cpu, memory, load_average, top_processes. Process percent_cpu is per-core (pan_task near 100% is normal). memory.used_pct is RAM, never CPU.",
     {
       firewall: firewallName,
     },
@@ -62,7 +63,11 @@ export function registerSystemTools(server: McpServer) {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await executeOpCommand("<show><system><resources></resources></system></show>", target);
-      return formatResponse(result);
+      if (!result.success) return formatResponse(result);
+      return formatResponse({
+        success: true,
+        data: parseSystemResources(result.data),
+      });
     }
   );
 }

@@ -58,12 +58,22 @@ export const logQuery = z
   .optional()
   .describe("Filter query for log retrieval");
 
-export const firewallName = z
-  .string()
+export const logHoursSchema = z
+  .number()
+  .int()
   .min(1)
-  .max(63)
+  .max(168)
   .optional()
-  .describe("Target firewall name (from firewalls.json). Required when multiple firewalls are configured; optional otherwise.");
+  .describe(
+    "Optional lookback window in hours. Builds a receive_time filter (e.g. 24 = last 24 hours)."
+  );
+
+export const firewallName = z.preprocess(
+  (value) => (value === "" || value === null ? undefined : value),
+  z.string().min(1).max(63).optional()
+).describe(
+  "Optional named firewall target. For NCP LocalMCP leave unset — the connector already targets one firewall. Only pass a name when multiple firewalls are configured."
+);
 
 export const firewallHost = z
   .string()

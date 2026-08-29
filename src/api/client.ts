@@ -2,6 +2,7 @@ import { XMLParser } from "fast-xml-parser";
 import { fetch } from "undici";
 import { resolveFirewall, isMultiFirewall } from "../config/firewalls.js";
 import { buildDispatcher, describeProxy } from "./proxy.js";
+import { extractJobId, buildLogTimeQuery, normalizeLogResults } from "../parse/logResults.js";
 
 const xmlParser = new XMLParser({
   ignoreAttributes: false,
@@ -102,11 +103,17 @@ async function makeRequest(url: string, apiKey = "", verifySSL = false): Promise
   };
 }
 
-export async function generateApiKey(host: string, username: string, password: string): Promise<ApiResponse> {
-  const url = `https://${host}/api/?type=keygen&user=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
+export async function generateApiKey(
+  host: string,
+  username: string,
+  password: string,
+  verifySSL = false
+): Promise<ApiResponse> {
+  const sanitized = host.replace(/^https?:\/\//, "").replace(/\/+$/, "").trim();
+  const url = `https://${sanitized}/api/?type=keygen&user=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`;
 
   try {
-    const result = await makeRequest(url);
+    const result = await makeRequest(url, "", verifySSL);
     if (result.success && result.data?.key) {
       return { success: true, data: { key: result.data.key } };
     }
@@ -142,12 +149,16 @@ export async function executeLogQuery(
   logType: string,
   nlogs: number,
   query: string | undefined,
-  target: FirewallTarget
+  target: FirewallTarget,
+  hours?: number
 ): Promise<ApiResponse> {
+  const effectiveQuery =
+    hours != null ? buildLogTimeQuery(hours, query) : query;
+
   // Step 1: Submit log query (type=log)
   let url = `https://${target.host}/api/?type=log&log-type=${encodeURIComponent(logType)}&nlogs=${nlogs}`;
-  if (query) {
-    url += `&query=${encodeURIComponent(query)}`;
+  if (effectiveQuery) {
+    url += `&query=${encodeURIComponent(effectiveQuery)}`;
   }
 
   let submitResult: ApiResponse;
@@ -162,7 +173,7 @@ export async function executeLogQuery(
 
   if (!submitResult.success) return submitResult;
 
-  const jobId = submitResult.data?.job;
+  const jobId = extractJobId(submitResult.data?.job);
   if (!jobId) {
     return { success: false, error: "No job ID returned from log query" };
   }
@@ -189,7 +200,16 @@ export async function executeLogQuery(
 
     const status = pollResult.data?.job?.status || pollResult.data?.log?.logs?.["@_progress"];
     if (status === "FIN" || pollResult.data?.log?.logs?.["@_progress"] === "100") {
-      return { success: true, data: pollResult.data?.log?.logs };
+      const normalized = normalizeLogResults(pollResult.data?.log?.logs);
+      return {
+        success: true,
+        data: {
+          ...normalized,
+          job: pollResult.data?.job ?? null,
+          query: effectiveQuery ?? null,
+          log_type: logType,
+        },
+      };
     }
   }
 

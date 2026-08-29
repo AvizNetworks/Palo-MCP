@@ -105,7 +105,13 @@ describe("firewallName", () => {
     expect(firewallName.safeParse(v).success).toBe(true);
   });
 
-  it.each(["", "a".repeat(64), 42, null])("rejects %j", (v) => {
+  it.each(["", null])("treats empty/null as unset for LocalMCP", (v) => {
+    const parsed = firewallName.safeParse(v);
+    expect(parsed.success).toBe(true);
+    if (parsed.success) expect(parsed.data).toBeUndefined();
+  });
+
+  it.each(["a".repeat(64), 42])("rejects %j", (v) => {
     expect(firewallName.safeParse(v).success).toBe(false);
   });
 });

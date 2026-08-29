@@ -1,6 +1,7 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { executeOpCommand, formatResponse, resolveTarget, isApiError } from "../api/client.js";
 import { firewallName } from "../schemas/panos.js";
+import { normalizeLicenses } from "../parse/licenses.js";
 
 export function registerLicensesTools(server: McpServer) {
   server.tool(
@@ -14,6 +15,9 @@ export function registerLicensesTools(server: McpServer) {
       const target = resolveTarget(firewall);
       if (isApiError(target)) return formatResponse(target);
       const result = await executeOpCommand("<request><license><info></info></license></request>", target);
+      if (result.success) {
+        result.data = normalizeLicenses(result.data);
+      }
       return formatResponse(result);
     }
   );
